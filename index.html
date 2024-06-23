@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>HNP Hotfix Spectre Bridge Browser Interface</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            background-color: #f8f9fa;
+        }
+		.blue-border {
+			border: 2px solid #6bcf54 !important;
+		}
+        .container {
+            max-width: 1400px;
+            width: 100%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            position: relative; /* Added for arrow positioning */
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .tab {
+            cursor: pointer;
+            padding: 10px;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            margin-top: 5px;
+        }
+        .tab-content {
+            display: none;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-top: none;
+        }
+        .canvas-container { 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 20px; 
+        }
+        canvas { 
+            width: 400px !important; 
+            height: 200px !important; 
+        }
+        .wallet-container { 
+            background-color: #e0f7fa; 
+            padding: 20px; 
+            margin-bottom: 20px; 
+            border-radius: 10px; 
+        }
+        .arrow-up {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            width: 0; 
+            height: 0; 
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 10px solid green;
+            display: none; /* Initially hidden */
+        }
+        .online-indicator {
+            color: green;
+            margin-left: 10px;
+            display: none;
+        }
+		
+		.total_metrics_style{
+            background-color: #fff;
+        }
+		
+		.tab-content {
+            background-color: #fff;
+        }
+		
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let previousMetrics = {};
+
+        function toggleTabContent(id) {
+            var content = document.getElementById(id);
+            if (content.style.display === "none" || content.style.display === "") {
+                content.style.display = "block";
+            } else {
+                content.style.display = "none";
+            }
+        }
+
+        async function fetchMetrics() {
+            try {
+                const response = await fetch('metrics.html');
+                const text = await response.text();
+                document.getElementById('metricsContainer').innerHTML = text;
+                var scripts = document.getElementById('metricsContainer').getElementsByTagName('script');
+                for (var i = 0; i < scripts.length; i++) {
+                    eval(scripts[i].innerText);
+                }
+                checkForIncreases();
+                updateTimestamp();
+            } catch (error) {
+                console.error('Fehler beim Abrufen der Metriken:', error);
+            }
+        }
+
+        function updateTimestamp() {
+            const now = new Date();
+            const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('last-updated').innerText = `Last Updated: ${formattedTime}`;
+        }
+
+        function checkForIncreases() {
+            const tables = document.querySelectorAll('table tbody');
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tr');
+                rows.forEach(row => {
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length === 2) {
+                        const metricName = cells[0].innerText;
+                        const metricValue = parseFloat(cells[1].innerText);
+                        const cellId = cells[1].id;
+                        
+                        const wallet = cellId.split('-')[0];
+                        const device = cellId.split('-')[1];
+                        
+                        if (!previousMetrics[wallet]) {
+                            previousMetrics[wallet] = {};
+                        }
+                        
+                        if (!previousMetrics[wallet][device]) {
+                            previousMetrics[wallet][device] = {};
+                        }
+                        
+                        if (!previousMetrics[wallet][device][metricName]) {
+                            previousMetrics[wallet][device][metricName] = metricValue;
+                        } else {
+                            if (metricValue > previousMetrics[wallet][device][metricName]) {
+                                showArrow(cells[1]);
+                                showOnlineIndicator(wallet);
+                            }
+                            previousMetrics[wallet][device][metricName] = metricValue;
+                        }
+                    }
+                });
+            });
+        }
+
+        function showArrow(cell) {
+            const arrow = document.createElement('div');
+            arrow.classList.add('arrow-up');
+            cell.appendChild(arrow);
+            arrow.style.display = 'block';
+            setTimeout(() => {
+                arrow.style.display = 'none';
+                cell.removeChild(arrow);
+            }, 2000);
+        }
+
+        function showOnlineIndicator(wallet) {
+            const onlineIndicator = document.getElementById(`${wallet}-online`);
+            if (onlineIndicator) {
+                onlineIndicator.style.display = 'inline';
+                setTimeout(() => {
+                    onlineIndicator.style.display = 'none';
+                }, 90000); // 90 seconds
+            }
+        }
+
+        function startFetching() {
+            fetchMetrics();
+            setInterval(fetchMetrics, 10000);
+        }
+    </script>
+	<script>
+	function addBlueBorder(walletId) {
+    const walletElement = document.getElementById(walletId);
+		if (walletElement) {
+			walletElement.classList.add('blue-border');
+			setTimeout(() => {
+				walletElement.classList.remove('blue-border');
+			}, 180000); // 3 minutes
+		}
+	}
+	function checkForIncreases() {
+		const tables = document.querySelectorAll('table tbody');
+		tables.forEach(table => {
+			const rows = table.querySelectorAll('tr');
+			rows.forEach(row => {
+				const cells = row.querySelectorAll('td');
+				if (cells.length === 2) {
+					const metricName = cells[0].innerText;
+					const metricValue = parseFloat(cells[1].innerText);
+					const cellId = cells[1].id;
+
+					const wallet = cellId.split('-')[0];
+					const device = cellId.split('-')[1];
+
+					if (!previousMetrics[wallet]) {
+						previousMetrics[wallet] = {};
+					}
+
+					if (!previousMetrics[wallet][device]) {
+						previousMetrics[wallet][device] = {};
+					}
+
+					if (!previousMetrics[wallet][device][metricName]) {
+						previousMetrics[wallet][device][metricName] = metricValue;
+					} else {
+						if (metricValue > previousMetrics[wallet][device][metricName]) {
+							showArrow(cells[1]);
+							showOnlineIndicator(wallet);
+							if (metricName === "Blocks Mined") {  // Check if the metric is "Blocks Mined"
+								addBlueBorder(`${wallet}`);
+							}
+						}
+						previousMetrics[wallet][device][metricName] = metricValue;
+					}
+				}
+			});
+		});
+	}
+	function testBlueBorder() {
+		const walletId = document.getElementById('wallet-id-input').value;
+		if (walletId) {
+			addBlueBorder(walletId);
+		} else {
+			alert("Please enter a Wallet ID");
+		}
+	}
+
+	</script>
+</head>
+<body style="background-color: #fcfcfc;" onload="startFetching()">
+    <div class="container">
+        <div id="metricsContainer"></div>
+    </div>
+</body>
+</html>
