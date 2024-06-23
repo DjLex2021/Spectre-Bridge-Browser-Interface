@@ -6,6 +6,9 @@ Need Python:
 Windows: https://www.python.org/downloads/windows/
 Linux: https://www.python.org/downloads/source/
 
+Download Release v.1.1.0:
+https://github.com/HNP-Hotfix/Spectre-SPR-Bridge-Browser-Interface/releases/tag/Stable
+
 1. Install Python and extract the downloaded ZIP file
 
 2. Windows:
