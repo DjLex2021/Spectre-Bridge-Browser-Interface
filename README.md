@@ -1,40 +1,43 @@
-HNP Hotfix Spectre Bridge Browser Interface
-![Hotfix Spectre Bridge Browser Interface](https://github.com/HNP-Hotfix/Spectre-SPR-Bridge-Browser-Interface/assets/173640092/1fa5d226-ee2f-43bd-8785-99286891c60c)
+# Spectre Bridge Browser Interface (original by HNP Hotfix)
 
+Modified version of "HNP Hotfix Spectre Bridge Browser Interface"
+- Web server port is 8088
+- Automatic page reload disabled
+- Table view of devices
+- Additional list of inactive devices
+- Record date and time of last block found
+- Record date and time of last block seen
+- Split device name and IP
+
+
+![Spectre Bridge Browser Interface](https://github.com/DjLex2021/Spectre-Bridge-Browser-Interface/assets/91385866/7a79b81a-fdb7-4b45-bfde-9719b4ffefcd)
 
 Need Python:
-Windows: https://www.python.org/downloads/windows/
-Linux: https://www.python.org/downloads/source/
-
-Download Release v.1.1.0:
-https://github.com/HNP-Hotfix/Spectre-SPR-Bridge-Browser-Interface/releases/tag/Stable
-
-1. Install Python and extract the downloaded ZIP file
-
-2. Windows:
-Edit the paths in the BAT file
--C:\Users\USERNAME\Path-to-Folder\web (this is the path to the downloaded folder)
--C:\Users\USERNAME\AppData\Local\Programs\Python\Python312\python.exe fetch_metrics.py (this is the path to the installed Python)
-
-2. Linux:
-Edit the paths in the SH file
--cd /path/to/web (this is the path to the downloaded folder)
-python3 /path/to/fetch_metrics.py (this is the path to the Python script)
-
-3. Windows:
-Start the BAT file with a double click
-
-3. Linux:
-Start the SH file with "chmod +x /path/to/start_linux.sh" and "/path/to/start_linux.sh"
+[Windows](https://www.python.org/downloads/windows/)
+[Linux](https://www.python.org/downloads/source/)
 
 
-4. Open the Browser:
-You can open the browser with this address: localhost or localhost:80
+## Installation
+Install Python and extract the downloaded ZIP file
 
-If you want to open it from other devices in the network: IP address of the device
-Example: 192.168.2.1
-or: 192.168.2.1:80
+## Usage
+Run the script:
+```bash
+python3 fetch_metrics.py
+```
 
----
 
-Donate Hotfix: spectre:qpamev6hcxkhx3x0vjaxmgnurszln88xrn67rxcswnt27jzyxvr9ymljr3hmx
+You can create a startup script and run it via crontabs:
+```bash
+#!/bin/bash
+if ps aux | grep 'python3 fetch_metrics.py' | grep -v grep; then
+    exit 1
+else
+    cd /path/to/fetch_metrics_script
+    /usr/bin/python3 fetch_metrics.py
+fi
+```
+
+Open the Browser and type in the address: localhost:8088
+
+If you want to open it from other devices in the network: <IP>:8088
