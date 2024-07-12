@@ -25,10 +25,21 @@ Need Python:
 ## Installation
 Install Python and extract the downloaded ZIP file
 
-## Usage
+## Run spr_brigde and output to file
+Screen
+```bash
+screen -S spr_bridge -L -Logfile /path/to/spr_bridge_output_txtfile -d -m /path/to/spr_bridge
+```
+
+CLI
+```bash
+/path/to/spr_bridge >> /path/to/spr_bridge_output_txtfile 2>&1 &
+```
+
+## Usage of Browser Interface Script
 Run the script:
 ```bash
-python3 fetch_metrics.py
+python3 fetch_metrics.py /path/to/spr_bridge_output_txtfile
 ```
 
 
