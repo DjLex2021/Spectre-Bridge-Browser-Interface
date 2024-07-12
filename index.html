@@ -118,7 +118,7 @@
 
         function updateTimestamp() {
             const now = new Date();
-            const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const formattedTime = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             document.getElementById('last-updated').innerText = `Last Updated: ${formattedTime}`;
         }
 
