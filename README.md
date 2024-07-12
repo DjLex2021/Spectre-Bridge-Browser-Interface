@@ -8,9 +8,14 @@ Modified version of "HNP Hotfix Spectre Bridge Browser Interface"
 - Record date and time of last block found
 - Record date and time of last block seen
 - Split device name and IP
+- Display number of active & inactive devices
+- Display overall hashrate
+- Display device hashrate
+- Display device uptime
 
 
-![Spectre Bridge Browser Interface](https://github.com/DjLex2021/Spectre-Bridge-Browser-Interface/assets/91385866/7a79b81a-fdb7-4b45-bfde-9719b4ffefcd)
+![Spectre Bridge Browser Interface](https://github.com/user-attachments/assets/1f074ad0-e0db-4d05-a2b3-683275d237e9)
+
 
 Need Python:
 [Windows](https://www.python.org/downloads/windows/)
