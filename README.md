@@ -13,9 +13,7 @@ Modified version of "HNP Hotfix Spectre Bridge Browser Interface"
 - Display device hashrate
 - Display device uptime
 
-
-![Spectre Bridge Browser Interface](https://github.com/user-attachments/assets/1f074ad0-e0db-4d05-a2b3-683275d237e9)
-
+![Spectre Bridge Browser Interface](https://github.com/user-attachments/assets/62e0ed06-96a9-474e-8e52-3772d977003b)
 
 Need Python:
 [Windows](https://www.python.org/downloads/windows/)
