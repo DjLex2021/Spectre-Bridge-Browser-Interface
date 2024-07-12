@@ -220,7 +220,7 @@ def fetch_metrics():
                             history[devName] += str(metrics["Blocks Mined"])
                             history[devName] += ','
 
-                            if oldDevValue[3] == '0':
+                            if oldDevValue[3] == '0' or str(metrics["Blocks Mined"]) == '0':
                                 history[devName] += 'never'
                             else:
                                 history[devName] += dt_string
