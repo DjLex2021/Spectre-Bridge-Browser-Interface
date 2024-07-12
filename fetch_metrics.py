@@ -3,6 +3,13 @@ import time
 from threading import Thread
 from collections import defaultdict
 
+from datetime import datetime
+import sys
+import json
+import os.path
+
+BRIDGE_LOGFILE = sys.argv[1]
+
 METRIC_NAMES = {
     "spr_blocks_mined": "Blocks Mined",
     "spr_valid_share_counter": "Valid Share",
@@ -130,6 +137,135 @@ def fetch_metrics():
                 f.write(f'<div>Network Difficulty: {network_difficulty_mhs} M</div>')
                 f.write('</div>')
 
+
+
+
+                data = {}
+                if BRIDGE_LOGFILE != '':
+                    with open(BRIDGE_LOGFILE, 'r') as lf:
+                        lines = lf.readlines()
+
+                    last_separator_index = -1
+                    for i, line in enumerate(lines):
+                        if line.strip().startswith('=') and 'spr_bridge' not in line:
+                            last_separator_index = i
+
+                    if last_separator_index != -1:
+                        for line in lines[last_separator_index + 1:]:
+                            if line.strip().startswith('='):
+                                break
+
+                            parts = line.split('|')
+                            if len(parts) == 5:
+                                if parts[0].strip() == '':
+                                    data['sum'] = {
+                                        'avg_hashrate': parts[1].strip(),
+                                        'acc_stl_inv': parts[2].strip(),
+                                        'blocks': parts[3].strip(),
+                                        'uptime': parts[4].strip()
+                                    }
+                                else:
+                                    worker_name = parts[0].strip()
+
+                                    data[worker_name] = {
+                                        'avg_hashrate': parts[1].strip(),
+                                        'acc_stl_inv': parts[2].strip(),
+                                        'blocks': parts[3].strip(),
+                                        'uptime': parts[4].strip()
+                                    }
+
+
+                if os.path.isfile('metrics_stat') is False:
+                    with open('metrics_stat', 'w', encoding='utf-8') as fh:
+                        fh.write('{}')
+
+                now = datetime.now()
+                dt_string = str(now).split('.')[0]
+
+                with open('metrics_stat', 'r') as fh:
+                    oldHistoryData = fh.read().rstrip()
+                if oldHistoryData == '':
+                    oldHistoryData = '{}'
+                history = json.loads(oldHistoryData)
+
+                for wallet, devices in metrics_by_wallet_device.items():
+                    for device, metrics in devices.items():
+                        dev = device.split(' (')
+                        devName = dev[0]
+
+                        if devName in history:
+                            oldDevValue = history[devName].split(',')
+                        else:
+                            oldDevValue = '0,0,0,0'
+                            oldDevValue = oldDevValue.split(',')
+
+                        if str(metrics["Valid Share"]) != str(oldDevValue[0]):
+                            history[devName] = str(metrics["Valid Share"])
+                            history[devName] += ','
+                            history[devName] += dt_string
+                            history[devName] += ','
+                            history[devName] += str(metrics["Blocks Mined"])
+                            history[devName] += ','
+
+                            if oldDevValue[3] == '0':
+                                history[devName] += 'never'
+                            else:
+                                history[devName] += str(oldDevValue[3])
+
+                        if str(metrics["Blocks Mined"]) != str(oldDevValue[2]):
+                            history[devName] = str(metrics["Valid Share"])
+                            history[devName] += ','
+                            history[devName] += dt_string
+                            history[devName] += ','
+                            history[devName] += str(metrics["Blocks Mined"])
+                            history[devName] += ','
+
+                            if oldDevValue[3] == '0':
+                                history[devName] += 'never'
+                            else:
+                                history[devName] += dt_string
+
+                with open('metrics_stat', 'w', encoding='utf-8') as fh:
+                    fh.write(json.dumps(history))
+
+                active = {}
+                inactive = {}
+                overall_hashrate = {}
+                for wallet, devices in metrics_by_wallet_device.items():
+                    wallet = wallet.replace('-', '_')
+                    active[wallet] = []
+                    inactive[wallet] = []
+                    overall_hashrate[wallet] = 0
+
+                    for device, metrics in devices.items():
+                        dev = device.split(' (')
+                        devName = dev[0]
+                        devIP = dev[1].replace(')', '')
+                        devHistory = history[devName].split(',')
+
+                        fmt = "%Y-%m-%d %H:%M:%S"
+                        d1 = datetime.strptime(devHistory[1], fmt)
+                        d2 = datetime.strptime(dt_string, fmt)
+                        d1_ts = time.mktime(d1.timetuple())
+                        d2_ts = time.mktime(d2.timetuple())
+                        minutes = round(int(d2_ts-d1_ts) / 60)
+
+                        if devName in data:
+                            avg_hashrate = data[devName]['avg_hashrate']
+                            uptime = data[devName]['uptime']
+                        else:
+                            avg_hashrate = '0 H/s'
+                            uptime = 0
+
+                        if minutes < 2:
+                            overall_hashrate[wallet] += float(avg_hashrate.replace('KH/s', '').replace('H/s', ''))
+                            active[wallet].append([devName, devIP, avg_hashrate, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1], uptime])
+                        else:
+                            inactive[wallet].append([devName, devIP, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1]])
+
+
+
+
                 for wallet, totals in total_metrics_by_wallet.items():
                     f.write(f'<div class="total_metrics_style" id="{wallet}"><h3>Total Metrics for Wallet: {wallet}<span class="online-indicator" id="{wallet}-online" style="display:none;">ONLINE</span></h3>')  # Add ONLINE indicator
                     f.write('<div class="canvas-container">')
@@ -163,7 +299,9 @@ def fetch_metrics():
 
                     f.write('</div>')
                     f.write('<table><thead><tr><th>Metric</th><th>Total Value</th></tr></thead><tbody>')
-                    f.write(f'<tr><td>Connected Devices</td><td>{len(devices_by_wallet[wallet])}</td></tr>')
+                    f.write(f'<tr><td>Current Hashrate</td><td>{round(overall_hashrate[wallet], 2)}</td></tr>')
+                    f.write(f'<tr><td>Active Devices</td><td>{len(active[wallet])}</td></tr>')
+                    f.write(f'<tr><td>Inactive Devices</td><td>{len(inactive[wallet])}</td></tr>')
 
                     for metric_name in METRIC_ORDER:
                         if metric_name == "Max Valid Share Difficulty":
@@ -175,91 +313,15 @@ def fetch_metrics():
 
                     f.write('</tbody></table>')
 
-
-
-
-                    import os.path
-                    if os.path.isfile('metrics_stat') is False:
-                        with open('metrics_stat', 'w', encoding='utf-8') as fh:
-                            fh.write('{}')
-
-                    from datetime import datetime
-                    import time
-                    import json
-                    now = datetime.now()
-                    dt_string = str(now).split('.')[0]
-
-                    with open('metrics_stat', 'r') as fh:
-                        oldHistoryData = fh.read().rstrip()
-                    if oldHistoryData == '':
-                        oldHistoryData = '{}'
-                    history = json.loads(oldHistoryData)
-
                     for wallet, devices in metrics_by_wallet_device.items():
-                        for device, metrics in devices.items():
-                            dev = device.split(' (')
-                            devName = dev[0]
-
-                            if devName in history:
-                                oldDevValue = history[devName].split(',')
-                            else:
-                                oldDevValue = '0,0,0,0'
-                                oldDevValue = oldDevValue.split(',')
-
-                            if str(metrics["Valid Share"]) != str(oldDevValue[0]):
-                                history[devName] = str(metrics["Valid Share"])
-                                history[devName] += ','
-                                history[devName] += dt_string
-                                history[devName] += ','
-                                history[devName] += str(metrics["Blocks Mined"])
-                                history[devName] += ','
-                                history[devName] += str(oldDevValue[3])
-
-                            if str(metrics["Blocks Mined"]) != str(oldDevValue[2]):
-                                history[devName] = str(metrics["Valid Share"])
-                                history[devName] += ','
-                                history[devName] += dt_string
-                                history[devName] += ','
-                                history[devName] += str(metrics["Blocks Mined"])
-                                history[devName] += ','
-
-                                if oldDevValue[3] == '0':
-                                    history[devName] += 'never'
-                                else:
-                                    history[devName] += dt_string
-
-                    with open('metrics_stat', 'w', encoding='utf-8') as fh:
-                        fh.write(json.dumps(history))
-
-
-
-
-                    for wallet, devices in metrics_by_wallet_device.items():
-                        inactive = []
-                        f.write('<table><thead><tr><th>Device</th><th style="text-align: center">IP</th><th style="text-align: center">Blocks Mined</th><th style="text-align: center">Last Block Found</th><th style="text-align: center">Invalid Share</th><th style="text-align: center">Job Counter</th><th style="text-align: center">Valid Share</th><th style="text-align: center">Valid Share Difficulty</th><th style="text-align: center">Last Seen</th></thead><tbody>')
-                        for device, metrics in devices.items():
-                            dev = device.split(' (')
-                            devName = dev[0]
-                            devIP = dev[1].replace(')', '')
-                            devHistory = history[devName].split(',')
-
-                            fmt = "%Y-%m-%d %H:%M:%S"
-                            d1 = datetime.strptime(devHistory[1], fmt)
-                            d2 = datetime.strptime(dt_string, fmt)
-                            d1_ts = time.mktime(d1.timetuple())
-                            d2_ts = time.mktime(d2.timetuple())
-                            minutes = round(int(d2_ts-d1_ts) / 60)
-
-                            if minutes < 2:
-                                f.write(f'<tr><td>{devName}</td><td>{devIP}</td><td style="text-align: right">{metrics["Blocks Mined"]}</td><td style="text-align: center">{devHistory[3]}</td><td style="text-align: right">{metrics["Invalid Share"]}</td><td style="text-align: right">{metrics["Job Counter"]}</td><td style="text-align: right">{metrics["Valid Share"]}</td><td style="text-align: right">{metrics["Valid Share Difficulty"]}</td><td style="text-align: center">{devHistory[1]}</td>')
-                            else:
-                                inactive.append([devName, devIP, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1]])
-
+                        f.write('<table><thead><tr><th>Device</th><th style="text-align: center;">IP</th><th style="text-align: center;">Hashrate</th><th style="text-align: center;">Blocks Mined</th><th style="text-align: center;">Last Block Found</th><th style="text-align: center;">Invalid Share</th><th style="text-align: center;">Job Counter</th><th style="text-align: center;">Valid Share</th><th style="text-align: center;">Valid Share Difficulty</th><th style="text-align: center;">Last Seen</th><th style="text-align: center;">Uptime</th></thead><tbody>')
+                        for v in active[wallet]:
+                            f.write(f'<tr><td>{v[0]}</td><td>{v[1]}</td><td style="text-align: right; white-space:nowrap;">{v[2]}</td><td style="text-align: right;">{v[3]}</td><td style="text-align: center;">{v[4]}</td><td style="text-align: right;">{v[5]}</td><td style="text-align: right;">{v[6]}</td><td style="text-align: right;">{v[7]}</td><td style="text-align: right;">{v[8]}</td><td style="text-align: center;">{v[9]}</td><td style="text-align: center;">{v[10]}</td>')
                         f.write('</tbody></table>')
 
-                        f.write('<h3>Inactive</h3><table><thead><tr><th>Device</th><th style="text-align: center">IP</th><th style="text-align: center">Blocks Mined</th><th style="text-align: center">Last Block Found</th><th style="text-align: center">Invalid Share</th><th style="text-align: center">Job Counter</th><th style="text-align: center">Valid Share</th><th style="text-align: center">Valid Share Difficulty</th><th style="text-align: center">Last Seen</th></thead><tbody>')
-                        for v in inactive:
-                            f.write(f'<tr><td>{v[0]}</td><td>{v[1]}</td><td style="text-align: right">{v[2]}</td><td style="text-align: center">{v[3]}</td><td style="text-align: right">{v[4]}</td><td style="text-align: right">{v[5]}</td><td style="text-align: right">{v[6]}</td><td style="text-align: right">{v[7]}</td><td style="text-align: center">{v[8]}</td>')
+                        f.write('<h3>Inactive</h3><table><thead><tr><th>Device</th><th style="text-align: center;">IP</th><th style="text-align: center;">Blocks Mined</th><th style="text-align: center;">Invalid Share</th><th style="text-align: center;">Job Counter</th><th style="text-align: center;">Valid Share</th><th style="text-align: center;">Valid Share Difficulty</th><th style="text-align: center;">Last Seen</th></thead><tbody>')
+                        for v in inactive[wallet]:
+                            f.write(f'<tr><td>{v[0]}</td><td>{v[1]}</td><td style="text-align: right;">{v[2]}</td><td style="text-align: right;">{v[4]}</td><td style="text-align: right;">{v[5]}</td><td style="text-align: right;">{v[6]}</td><td style="text-align: right;">{v[7]}</td><td style="text-align: center;">{v[8]}</td>')
                         f.write('</tbody></table>')
         else:
             print('Failed to fetch metrics')
