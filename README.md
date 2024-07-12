@@ -48,7 +48,7 @@ if ps aux | grep 'python3 fetch_metrics.py' | grep -v grep; then
     exit 1
 else
     cd /path/to/fetch_metrics_script
-    /usr/bin/python3 fetch_metrics.py
+    /usr/bin/python3 fetch_metrics.py /path/to/spr_bridge_output_txtfile
 fi
 ```
 
