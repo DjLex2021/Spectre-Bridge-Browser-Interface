@@ -258,7 +258,8 @@ def fetch_metrics():
                             uptime = 0
 
                         if minutes < 2:
-                            overall_hashrate[wallet] += float(avg_hashrate.replace('KH/s', '').replace('H/s', ''))
+                            device_hashrate = float(avg_hashrate.replace('H/s', '')) / 1000 if 'KH/s' not in avg_hashrate else float(avg_hashrate.replace('KH/s', ''))
+                            overall_hashrate[wallet] += device_hashrate
                             active[wallet].append([devName, devIP, avg_hashrate, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1], uptime])
                         else:
                             inactive[wallet].append([devName, devIP, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1]])
@@ -299,7 +300,7 @@ def fetch_metrics():
 
                     f.write('</div>')
                     f.write('<table><thead><tr><th>Metric</th><th>Total Value</th></tr></thead><tbody>')
-                    f.write(f'<tr><td>Current Hashrate</td><td>{round(overall_hashrate[wallet], 2)}</td></tr>')
+                    f.write(f'<tr><td>Current Hashrate</td><td>{round(overall_hashrate[wallet], 2)}KH/s</td></tr>')
                     f.write(f'<tr><td>Active Devices</td><td>{len(active[wallet])}</td></tr>')
                     f.write(f'<tr><td>Inactive Devices</td><td>{len(inactive[wallet])}</td></tr>')
 
