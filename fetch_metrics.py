@@ -9,6 +9,7 @@ import json
 import os.path
 
 BRIDGE_LOGFILE = sys.argv[1]
+INACTIVITY_TIME = 5
 
 METRIC_NAMES = {
     "spr_blocks_mined": "Blocks Mined",
@@ -257,7 +258,7 @@ def fetch_metrics():
                             avg_hashrate = '0 H/s'
                             uptime = 0
 
-                        if minutes < 2:
+                        if minutes < INACTIVITY_TIME:
                             device_hashrate = float(avg_hashrate.replace('H/s', '')) / 1000 if 'KH/s' not in avg_hashrate else float(avg_hashrate.replace('KH/s', ''))
                             overall_hashrate[wallet] += device_hashrate
                             active[wallet].append([devName, devIP, avg_hashrate, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1], uptime])
