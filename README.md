@@ -21,7 +21,7 @@ Need Python:
 
 
 ## Installation
-Install Python and extract the downloaded ZIP file
+Install Python
 
 ## Run spr_brigde and output to file
 Screen
