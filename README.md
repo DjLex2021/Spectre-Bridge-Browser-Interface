@@ -6,7 +6,7 @@ Modified version of "HNP Hotfix Spectre Bridge Browser Interface"
 - Table view of devices
 - Additional list of inactive devices
 - Record date and time of last block found
-- Record date and time of last block seen
+- Record date and time of divice last seen (activity)
 - Split device name and IP
 - Display number of active & inactive devices
 - Display overall hashrate
