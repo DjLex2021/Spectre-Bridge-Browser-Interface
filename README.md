@@ -36,7 +36,7 @@ CLI
 
 You should create a logrotate for the output file
 ```
-/usr/local/bin/spectre/bridgeLog {
+/path/to/spr_bridge_output_txtfile {
     daily
     missingok
     rotate 0
