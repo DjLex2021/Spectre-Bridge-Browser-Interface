@@ -34,6 +34,20 @@ CLI
 /path/to/spr_bridge >> /path/to/spr_bridge_output_txtfile 2>&1 &
 ```
 
+You should create a logrotate for the output file
+```
+/usr/local/bin/spectre/bridgeLog {
+    daily
+    missingok
+    rotate 0
+    notifempty
+    create 0755 root root
+    postrotate
+        /bin/pkill -f '/usr/bin/python3 fetch_metrics.py /path/to/spr_bridge_output_txtfile'
+    endscript
+}
+```
+
 ## Usage of Browser Interface Script
 Run the script:
 ```bash
