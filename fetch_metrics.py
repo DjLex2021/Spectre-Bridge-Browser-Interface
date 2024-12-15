@@ -194,6 +194,9 @@ def fetch_metrics():
                         dev = device.split(' (')
                         devName = dev[0]
 
+                        if 'Blocks Mined' not in metrics:
+                            metrics["Blocks Mined"] = 0
+
                         if devName in history:
                             oldDevValue = history[devName].split(',')
                         else:
@@ -261,9 +264,9 @@ def fetch_metrics():
                         if minutes < INACTIVITY_TIME:
                             device_hashrate = float(avg_hashrate.replace('H/s', '')) / 1000 if 'KH/s' not in avg_hashrate else float(avg_hashrate.replace('KH/s', ''))
                             overall_hashrate[wallet] += device_hashrate
-                            active[wallet].append([devName, devIP, avg_hashrate, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1], uptime])
+                            active[wallet].append([devName, devIP, avg_hashrate, metrics["Blocks Mined"], devHistory[3], metrics.get("Invalid Share", 0), metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1], uptime])
                         else:
-                            inactive[wallet].append([devName, devIP, metrics["Blocks Mined"], devHistory[3], metrics["Invalid Share"], metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1]])
+                            inactive[wallet].append([devName, devIP, metrics["Blocks Mined"], devHistory[3], metrics.get("Invalid Share", 0), metrics["Job Counter"], metrics["Valid Share"], metrics["Valid Share Difficulty"], devHistory[1]])
 
 
 
